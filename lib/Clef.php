@@ -35,7 +35,7 @@ class Clef {
     // @var string|null The version of the Clef API to use for requests.
     public static $apiVersion = 'v1';
 
-    const VERSION = '0.0.1';
+    const VERSION = '1.0.0';
 
     /**
      * @return string The API ID used for requests.
