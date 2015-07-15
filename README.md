@@ -1,5 +1,6 @@
 # Clef PHP bindings
 
+[![Latest Stable Version](https://poser.pugx.org/clef/clef-php/v/stable.svg)](https://packagist.org/packages/clef/clef-php)
 [![License](https://poser.pugx.org/clef/clef-php/license.svg)](https://packagist.org/packages/clef/clef-php)
 
 A PHP wrapper for the [Clef](https://getclef.com/) API. Authenticate a user and access their information in two lines of code. 
