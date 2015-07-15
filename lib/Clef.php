@@ -2,29 +2,21 @@
 
 namespace Clef;
 
-class ClefAPIError extends Exception {}
+use Exception;
 
-class ClefAPIInvalidAppIDError extends ClefAPIError {}
-class ClefAPIInvalidAppSecretError extends ClefAPIError {}
-class ClefAPIInvalidAppError extends ClefAPIError {}
-class ClefAPIInvalidOAuthCodeError extends ClefAPIError {}
-class ClefAPIInvalidOAuthTokenError extends ClefAPIError {}
-class ClefAPIInvalidLogoutHookURLError extends ClefAPIError {}
-class ClefAPIInvalidLogoutTokenError extends ClefAPIError {}
-class ClefAPIServerError extends ClefAPIError {}
-class ClefAPIConnectionError extends ClefAPIError {}
+class Error extends Exception {}
+
+class InvalidAppIDError extends Error {}
+class InvalidAppSecretError extends Error {}
+class InvalidAppError extends Error {}
+class InvalidOAuthCodeError extends Error {}
+class InvalidOAuthTokenError extends Error {}
+class InvalidLogoutHookURLError extends Error {}
+class InvalidLogoutTokenError extends Error {}
+class ServerError extends Error {}
+class ConnectionError extends Error {}
 
 class Clef {
-
-    private static $MESSAGE_TO_ERROR_MAP = [
-        'Invalid App ID.' => ClefAPIInvalidAppIDError,
-        'Invalid App Secret.' => ClefAPIInvalidAppSecretError,
-        'Invalid App.' => ClefAPIInvalidAppError,
-        'Invalid OAuth Code.' => ClefAPIInvalidOAuthCodeError,
-        'Invalid token.' => ClefAPIInvalidOAuthTokenError,
-        'Invalid logout hook URL.' => ClefAPIInvalidLogoutHookURLError,
-        'Invalid Logout Token.' => ClefAPIInvalidLogoutTokenError,
-    ];
 
     // @var string The Stripe API key to be used for requests.
     public static $apiID;
@@ -116,91 +108,77 @@ class Clef {
             try {
                 return json_decode($response);
             } catch (Exception $e) {
-                throw new ClefAPIServerError("An error occurred while processing your Clef API request: " . $response);
+                throw new ServerError("An error occurred while processing your Clef API request: " . $response);
             }
         } else {
-            throw new ClefAPIConnectionError("An error occurred while trying to connect to the Clef API. Please check your connection and try again.");
+            throw new ConnectionError("An error occurred while trying to connect to the Clef API. Please check your connection and try again.");
         }
     }
 
     public static function get_login_information($code) {
-        if (!(isset($_REQUEST['state']) && Clef::validate_state_parameter($_REQUEST['state']))) {
-            header('HTTP/1.0 403 Forbidden');
-            echo "The state parameter didn't match what was passed in to the Clef button.";
-            exit;
-        }
-
         if (!isset($code) || trim($code) === "") {
-            throw new ClefAPIInvalidOAuthCodeError();
+            throw new InvalidOAuthCodeError();
         }
 
         $response = Clef::doApiRequest(
             "/authorize",
             array(
-                data => array(
+                "data" => array(
                     'code' => $code,
                     'app_id' => Clef::getApiID(),
                     'app_secret' => Clef::getApiSecret()
                 ),
-                method => 'POST'
+                "method" => 'POST'
             )
         );
 
         // if there's an error, Clef's API will report it
-        if(!$response->error) {
+        if(!isset($response->error)) {
             $response = Clef::doApiRequest(
                 "/info",
                 array(
-                    data => array(
-                        access_token => $response->access_token
+                    "data" => array(
+                        "access_token" => $response->access_token
                     ),
-                    method => "GET"
+                    "method" => "GET"
                 )
             );
 
             if (!isset($response->error)) {
                 return $response;
             } else {
-                throw new Clef::$MESSAGE_TO_ERROR_MAP($response->error);
+                self::message_to_error($response->error);
             }
         } else {
-            throw new Clef::$MESSAGE_TO_ERROR_MAP[$response->error];
+            self::message_to_error($response->error);
         }
-
-
     }
 
     public static function get_logout_information($token) {
         if (!isset($token) || trim($token) === "") {
-            throw new ClefEmptyLogoutTokenException();
+            throw new InvalidLogoutTokenError();
         }
 
         $response = Clef::doApiRequest(
             '/logout',
             array(
-                data => array(
-                    logout_token => $token,
-                    app_id => Clef::getApiID(),
-                    app_secret => Clef::getApiSecret()
+                "data" => array(
+                    "logout_token" => $token,
+                    "app_id" => Clef::getApiID(),
+                    "app_secret" => Clef::getApiSecret()
                 ),
-                method => 'POST'
+                "method" => 'POST'
             )
         );
 
-        if (!$response->error) {
+        if (!isset($response->error)) {
             return $response->clef_id;
         } else {
-            throw new Clef::$MESSAGE_TO_ERROR_MAP[$response->error];
+            self::message_to_error($response->error);
         }
     }
 
-    private static function base64url_encode($plainText) {
-        $base64 = base64_encode($plainText);
-        $base64url = strtr($base64, '+/=', '-_,');
-        return $base64url;
-    }
-
-    public static function generate_state_parameter() {
+    public static function generate_session_state_parameter() {
         if (!session_id()) {
             session_start();
         }
@@ -214,7 +192,7 @@ class Clef {
         }
     }
 
-    public static function validate_state_parameter($state) {
+    public static function validate_session_state_parameter($state) {
         if (!session_id()) {
             session_start();
         }
@@ -222,5 +200,40 @@ class Clef {
         $is_valid = isset($_SESSION['state']) && strlen($_SESSION['state']) > 0 && $_SESSION['state'] == $state;
         unset($_SESSION['state']);
         return $is_valid;
+    }
+
+
+    private static function message_to_error($msg) {
+        switch ($msg) {
+            case "Invalid App ID.":
+                throw new InvalidAppIDError("The application ID you provided is invalid.");
+                break;
+            case "Invalid App Secret.":
+                throw new InvalidAppSecretError("The application secret you provided is invalid.");
+                break;
+            case "Invalid App.":
+                throw new InvalidAppError("The application ID or secret you provided is invalid.");
+                break;
+            case "Invalid OAuth Code.":
+                throw new InvalidOAuthCodeError("The OAuth code you provided is invalid.");
+                break;
+            case "Invalid token.":
+                throw new InvalidOAuthTokenError("The OAuth token returned by the Clef API is invalid.");
+                break;
+            case "Invalid logout hook URL.":
+                throw new InvalidLogoutHookURLError("The custom logout hook URL you provided is invalid. Please verify that it is on the same domain as your application.");
+                break;
+            case "Invalid Logout Token.":
+                throw new InvalidLogoutTokenError("The logout token you provided is invalid.");
+                break;
+            default:
+                throw new Exception("An exception occurred while accessing the Clef API: " . $msg);
+        }
+    }
+
+    private static function base64url_encode($plainText) {
+        $base64 = base64_encode($plainText);
+        $base64url = strtr($base64, '+/=', '-_,');
+        return $base64url;
     }
 }
