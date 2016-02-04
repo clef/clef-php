@@ -7,6 +7,7 @@ class Configuration {
     public $id;
     public $secret;
     public $passphrase;
+    public $keypair;
 
     public $api_base = "https://clef.io";
     public $api_version = "v1";
@@ -21,5 +22,17 @@ class Configuration {
                 $this->$key = $args[$key];
             }
         }
+    }
+
+    function getKeypairObject() {
+        if (!isset($this->keypair)) {
+            throw new \Clef\MisconfigurationError("Please set a keypair on the Clef configuration object");
+        }
+
+        if (is_string($this->keypair)) {
+            return openssl_get_private($this->keypair);
+        }
+
+        return $this->keypair;
     }
 }

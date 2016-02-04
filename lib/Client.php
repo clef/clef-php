@@ -2,7 +2,11 @@
 
 namespace Clef;
 
+require_once __DIR__ . "/Signing.php";
+
 class Client {
+    use \Clef\Signing;
+
     private $configuration;
 
     function __construct($configuration) {

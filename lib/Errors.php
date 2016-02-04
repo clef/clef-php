@@ -15,6 +15,7 @@ class InvalidLogoutHookURLError extends Error {}
 class InvalidLogoutTokenError extends Error {}
 class ServerError extends Error {}
 class ConnectionError extends Error {}
+class MisconfigurationError extends Error {}
 
 trait Errors {
     private function message_to_error($msg) {
