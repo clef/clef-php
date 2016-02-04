@@ -19,6 +19,12 @@ class Client {
         return $this->sign_payload($payload);
     }
 
+    public function sign_reactivation_payload($payload) {
+        $payload["type"] = "reactivation_handshake";
+        $this->assert_keys_in_payload($payload, array("type"));
+        return $this->sign_payload($payload);
+    }
+
     public function verify_login_payload($payload, $user_public_key) {
         return true;
     }
