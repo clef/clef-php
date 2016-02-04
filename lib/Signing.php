@@ -28,6 +28,14 @@ trait Signing {
 
     /* Private functions */ 
 
+    function assert_keys_in_payload($payload, $keys) {
+        foreach ($keys as $key) {
+            if (!isset($payload[$key])) {
+                throw new \Clef\InvalidPayloadError("Missing " . $key . " in payload.");
+            }
+        }
+    }
+
     function add_keys_to_payload($payload) {
         $payload["application_id"] = $this->configuration->id;
         $payload["timestamp"] = time();
@@ -56,6 +64,4 @@ trait Signing {
         openssl_sign($data, $signature, $this->configuration->getKeypairObject(), self::$SIGNATURE_ALG);
         return $signature;
     }
-
-
 }

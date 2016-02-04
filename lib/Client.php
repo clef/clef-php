@@ -14,7 +14,9 @@ class Client {
     }
 
     public function sign_login_payload($payload) {
-        return $payload;
+        $payload["type"] = "login";
+        $this->assert_keys_in_payload($payload, array("clef_id", "nonce", "redirect_url", "session_id", "type"));
+        return $this->sign_payload($payload);
     }
 
     public function verify_login_payload($payload, $user_public_key) {
