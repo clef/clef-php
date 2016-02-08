@@ -39,6 +39,28 @@ If you do not wish to use Composer, you can download the [latest release](https:
 Usage
 -----
 
+#### Configuring the library
+
+You'll need to configure the PHP library with your app ID and app secret. If you're using Distributed Auth, you'll also need to configure it with your private key and optionally the passphrase used to protect it. 
+
+    $configuration = new \Clef\Configuration(array(
+        "keypair" => __DIR__ . "yourprivatekey.pem",
+        "passphrase" => "optional passphrase used to encrypt your key"
+    ));
+    \Clef\Clef::$initialize(
+        "YOUR_APPLICATION_ID", 
+        "YOUR_APPLICATION_SECRET", 
+        $configuration
+    );
+
+*YOUR_APPLICATION_ID* is your website's app ID, which you generated in the Clef dashboard when you created your integration. 
+
+*YOUR_APPLICATION_SECRET* is your website's app ID, which you generated in the Clef dashboard when you created your integration. 
+
+*keypair* is either the path to your PEM-formatted private key or aa string representation of your keypair's PEM-formatted private key. Your private key may be encrypted if you set a passphrase when you generated your keypair. 
+
+*passphrase* (optional) is an optional passphrase that protects your website's keypair. You can set a passphrase when you generate your keypair using ssh-keygen or openssl. 
+
 #### Logging in a user
 
 When a user logs in with Clef, the browser will redirect to your `data-redirect-url`. To retrieve user information, call `get_login_information` in that endpoint: 
@@ -61,6 +83,64 @@ documentation on [Database
 logout](http://docs.getclef.com/v1.0/docs/database-logout).
 
 
+## Constructing the login payload
+
+After you complete the OAuth handshake, the library will construct, sign, and serialize a valid payload for you.
+
+First, construct the payload: 
+
+    # Following the OAuth handshake, we create or look up a user with the
+    # information returned by Clef. Since auth_hash contains a user's public key,
+    # a newly created user should be created with the public key.
+    $user = User::find_by_clef_id($response["clef_id"])
+
+    $payload = array(
+        "nonce" => bin2hex(openssl_random_pseudo_bytes(16)),
+        "clef_id" => $user->clef_id,
+        "redirect_url" => 'http://yourwebsite.com/clef/confirm',
+        "session_id" => $session_id
+    }
+
+    # We store the payload in the browser session so we can verify the nonce later
+    $_SESSION['clef_payload'] = payload
+
+You can then sign the payload: 
+
+    $signed_payload = \Clef\Clef::sign_login_payload($payload);
+
+The Clef library will take care of properly serializing the payload to `payload_json`, generating a `SHA256` hash and signing it. 
+
+Finally, you can serialize the payload to base64 and redirect the browser: 
+
+    header("https://clef.io/api/v1/validate?payload=" . Clef::encode_payload(signed_payload);
+    die();
+
+## Verifying the user-signed payload after a user confirms login
+
+When the browser redirects to your distributed validation `redirect_url`, you'll receive the payload bundle you sent to Clef, signed by the user. We can use the library to validate and verify the user's signature.
+
+First, we decode the payload and check it against the nonce we generated: 
+
+    $payload_bundle = Clef::decode_payload($_REQUEST["payload"]);
+    $signed_payload = json_decode(payload_bundle["payload_json"], true);
+
+    $session_payload = $_SESSION["clef_payload"];
+    $payload_is_valid = ($session_payload != "" && $signed_payload != "" and $session_payload["nonce"] === $signed_payload["nonce"]);
+
+    if ($payload_is_valid) {
+        unset($_SESSION["clef_payload"]);
+    } else {
+        // Show an error message to the user
+    }
+
+Then, we verify that the payload is signed by the user's private key: 
+
+    $user = User::find_by_clef_id($signed_payload["clef_id"]);
+    \Clef\Clef::verify_login_payload($payload_bundle, $user->public_key);
+
+`verify_login_payload` validates the payload, verifies that it originated from your website by verifying with your website's public key, and verifies that the user signed it. If it fails, it will throw an exception of the type `\Clef\VerificationError` with a message indicating the error. 
+
+If verification succeeds, you can log the user in as you normally would. 
 Sample App
 ----------
 

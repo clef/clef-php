@@ -6,7 +6,7 @@ class Configuration {
 
     public $id;
     public $secret;
-    public $passphrase;
+    public $passphrase = "";
     public $keypair;
 
     public $api_base = "https://clef.io";
@@ -30,7 +30,7 @@ class Configuration {
         }
 
         if (is_string($this->keypair)) {
-            return openssl_get_private($this->keypair);
+            return openssl_get_private($this->keypair, $this->passphrase);
         }
 
         return $this->keypair;

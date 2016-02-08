@@ -77,32 +77,30 @@ class Clef {
     }
 
     public static function generate_session_state_parameter() {
-        if (!session_id()) {
-            session_start();
-        }
+        return self::$client->generate_session_state_parameter();
+    }
 
-        if (isset($_SESSION['state'])) {
-            return $_SESSION['state'];
-        } else {
-            $state = Clef::base64url_encode(openssl_random_pseudo_bytes(32));
-            $_SESSION['state'] = $state;
-            return $state;
-        }
+    public static function sign_login_payload($payload) {
+        return self::$client->sign_login_payload($payload);
+    }
+
+    public static function sign_reactivation_payload($payload) {
+        return self::$client->sign_reactivation_payload($payload);
+    }
+
+    public static function verify_login_payload($payload, $user_public_key) {
+        return self::$client->verify_login_payload($payload, $user_public_key);
+    }
+
+    public static function encode_payload($payload) {
+        return self::$client->encode_payload($payload);
+    }
+
+    public static function decode_payload($payload) {
+        return self::$client->decode_payload($payload);
     }
 
     public static function validate_session_state_parameter($state) {
-        if (!session_id()) {
-            session_start();
-        }
-
-        $is_valid = isset($_SESSION['state']) && strlen($_SESSION['state']) > 0 && $_SESSION['state'] == $state;
-        unset($_SESSION['state']);
-        return $is_valid;
-    }
-
-    private static function base64url_encode($plainText) {
-        $base64 = base64_encode($plainText);
-        $base64url = strtr($base64, '+/=', '-_,');
-        return $base64url;
+        return self::$client->validate_session_state_parameter($state);
     }
 }
