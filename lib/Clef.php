@@ -20,50 +20,9 @@ class Clef {
     private static $configuration;
     private static $client;
 
-    const VERSION = '1.0.1';
+    const VERSION = '2.0.0';
 
-    /**
-     * @return string The API ID used for requests.
-     */
-    public static function getApiID() {
-        return self::$configuration->id;
-    }
-
-    /**
-     * @return string The API Secret used for requests.
-     */
-    public static function getApiSecret() {
-        return self::$configuration->secret;
-    }
-
-    /**
-     * @return string The API version used for requests. null if we're using the
-     *    latest version.
-     */
-    public static function getApiVersion() {
-        return self::$configuration->api_version;
-    }
-
-    /**
-     * @param string $apiVersion The API version to use for requests.
-     */
-    public static function setApiVersion($api_version) {
-        self::$configuration->api_version = $api_version;
-    }
-
-    /**
-     * Sets the API key to be used for requests.
-     *
-     * @param string $apiKey
-     */
-    public static function initialize($id, $secret, $configuration = null) {
-        if (!isset($configuration)) {
-            $configuration = new \Clef\Configuration(array(
-                "id" => $id,
-                "secret" => $secret
-            ));
-        }
-
+    public static function configure($configuration) {
         self::$configuration = $configuration;
         self::$client = new \Clef\Client(self::$configuration);
     }
@@ -102,5 +61,54 @@ class Clef {
 
     public static function validate_session_state_parameter($state) {
         return self::$client->validate_session_state_parameter($state);
+    }
+
+    // Deprecated functions
+
+    /**
+     * @deprecated
+     * @return string The API ID used for requests.
+     */
+    public static function getApiID() {
+        return self::$configuration->id;
+    }
+
+    /**
+     * @deprecated
+     * @return string The API Secret used for requests.
+     */
+    public static function getApiSecret() {
+        return self::$configuration->secret;
+    }
+
+    /**
+     * @deprecated
+     * @return string The API version used for requests. null if we're using the
+     *    latest version.
+     */
+    public static function getApiVersion() {
+        return self::$configuration->api_version;
+    }
+
+    /**
+     * @deprecated
+     * @param string $apiVersion The API version to use for requests.
+     */
+    public static function setApiVersion($api_version) {
+        self::$configuration->api_version = $api_version;
+    }
+
+    /**
+     * Sets the API key to be used for requests.
+     * 
+     * @deprecated
+     * @param string $apiKey
+     */
+    public static function initialize($id, $secret) {
+        $configuration = new \Clef\Configuration(array(
+            "id" => $id,
+            "secret" => $secret
+        ));
+        self::configure($configuration);
     }
 }

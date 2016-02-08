@@ -44,18 +44,16 @@ Usage
 You'll need to configure the PHP library with your app ID and app secret. If you're using Distributed Auth, you'll also need to configure it with your private key and optionally the passphrase used to protect it. 
 
     $configuration = new \Clef\Configuration(array(
+        "id" => "YOUR_APPLICATION_ID", 
+        "secret" => "YOUR_APPLICATION_SECRET", 
         "keypair" => __DIR__ . "yourprivatekey.pem",
         "passphrase" => "optional passphrase used to encrypt your key"
     ));
-    \Clef\Clef::$initialize(
-        "YOUR_APPLICATION_ID", 
-        "YOUR_APPLICATION_SECRET", 
-        $configuration
-    );
+    \Clef\Clef::$configure($configuration);
 
-*YOUR_APPLICATION_ID* is your website's app ID, which you generated in the Clef dashboard when you created your integration. 
+*id* is your website's app ID, which you generated in the Clef dashboard when you created your integration. 
 
-*YOUR_APPLICATION_SECRET* is your website's app ID, which you generated in the Clef dashboard when you created your integration. 
+*secret* is your website's app ID, which you generated in the Clef dashboard when you created your integration. 
 
 *keypair* is either the path to your PEM-formatted private key or aa string representation of your keypair's PEM-formatted private key. Your private key may be encrypted if you set a passphrase when you generated your keypair. 
 
@@ -65,7 +63,7 @@ You'll need to configure the PHP library with your app ID and app secret. If you
 
 When a user logs in with Clef, the browser will redirect to your `data-redirect-url`. To retrieve user information, call `get_login_information` in that endpoint: 
 
-    \Clef\Clef::initialize(APP_ID, APP_SECRET);
+    \Clef\Clef::configure($configuration);
     $response = \Clef\Clef::get_login_information($_GET["code"]);
 
 For what to do after getting user information, check out our documentation on
@@ -75,7 +73,7 @@ For what to do after getting user information, check out our documentation on
 
 When you configure your Clef integration, you can also set up a logout hook URL. Clef sends a POST to this URL whenever a user logs out with Clef, so you can log them out on your website too.
 
-    \Clef\Clef::initialize(APP_ID, APP_SECRET);
+    \Clef\Clef::configure($configuration);
     $clef_id = \Clef\Clef::get_logout_information($_POST["logout_token"]);
 
 For what to do after getting a user who's logging out's `clef_id`, see our
