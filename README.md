@@ -49,7 +49,7 @@ You'll need to configure the PHP library with your app ID and app secret. If you
         "keypair" => __DIR__ . "yourprivatekey.pem",
         "passphrase" => "optional passphrase used to encrypt your key"
     ));
-    \Clef\Clef::$configure($configuration);
+    \Clef\Clef::configure($configuration);
 
 *id* is your website's app ID, which you generated in the Clef dashboard when you created your integration. 
 
