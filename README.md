@@ -82,8 +82,11 @@ For what to do after getting a user who's logging out's `clef_id`, see our
 documentation on [Database
 logout](http://docs.getclef.com/v1.0/docs/database-logout).
 
+## Distributed Auth
 
-## Constructing the login payload
+The Clef PHP library can be used to implement [Distributed Auth](https://getclef.com/distributed). If you're not using Distributed Auth, please ignore this section.
+
+#### Constructing the login payload
 
 After you complete the OAuth handshake, the library will construct, sign, and serialize a valid payload for you.
 
@@ -115,7 +118,7 @@ Finally, you can serialize the payload to base64 and redirect the browser:
     header("https://clef.io/api/v1/validate?payload=" . Clef::encode_payload(signed_payload);
     die();
 
-## Verifying the user-signed payload after a user confirms login
+#### Verifying the user-signed payload after a user confirms login
 
 When the browser redirects to your distributed validation `redirect_url`, you'll receive the payload bundle you sent to Clef, signed by the user. We can use the library to validate and verify the user's signature.
 
