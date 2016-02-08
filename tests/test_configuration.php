@@ -18,7 +18,7 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase {
             "secret" => "secret"
         ));
 
-        $this->assertEquals($configuration->api_base, "https://clef.io");
+        $this->assertEquals($configuration->api_base, "https://clef.io/api");
     }
 
     public function testDefaultsCanBeOverridden() {

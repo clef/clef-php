@@ -92,10 +92,10 @@ After you complete the OAuth handshake, the library will construct, sign, and se
 
 First, construct the payload: 
 
-    # Following the OAuth handshake, we create or look up a user with the
-    # information returned by Clef. Since auth_hash contains a user's public key,
-    # a newly created user should be created with the public key.
-    $user = User::find_by_clef_id($response["clef_id"])
+    // Following the OAuth handshake, we create or look up a user with the
+    // information returned by Clef. Since auth_hash contains a user's public key,
+    // a newly created user should be created with the public key.
+    $user = User::find_by_clef_id($response["clef_id"]);
 
     $payload = array(
         "nonce" => bin2hex(openssl_random_pseudo_bytes(16)),
@@ -105,7 +105,7 @@ First, construct the payload:
     }
 
     # We store the payload in the browser session so we can verify the nonce later
-    $_SESSION['clef_payload'] = payload
+    $_SESSION['clef_payload'] = $payload;
 
 You can then sign the payload: 
 
@@ -115,7 +115,7 @@ The Clef library will take care of properly serializing the payload to `payload_
 
 Finally, you can serialize the payload to base64 and redirect the browser: 
 
-    header("https://clef.io/api/v1/validate?payload=" . Clef::encode_payload(signed_payload);
+    header("https://clef.io/api/v1/validate?payload=" . \Clef\Clef::encode_payload(signed_payload));
     die();
 
 #### Verifying the user-signed payload after a user confirms login

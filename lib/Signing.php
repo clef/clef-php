@@ -12,7 +12,7 @@ trait Signing {
 
         $payload_json = $this->sort_and_json_encode($payload);
         $payload_hash = $this->hash($payload_json);
-        $payload_signature = $this->sign($payload_json, $this->configuration->getKeypairObject());
+        $payload_signature = $this->sign($payload_json, $this->configuration->getKeypair());
 
         return $this->sort(array(
             "payload_json" => $payload_json,

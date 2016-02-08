@@ -4,10 +4,14 @@ namespace Clef;
 
 require_once __DIR__ . "/Encoding.php";
 require_once __DIR__ . "/Signing.php";
+require_once __DIR__ . "/Errors.php";
+require_once __DIR__ . "/Requests.php";
 
 class Client {
     use \Clef\Encoding;
     use \Clef\Signing;
+    use \Clef\Requests;
+    use \Clef\Errors;
 
     private $configuration;
 
@@ -53,13 +57,13 @@ class Client {
             throw new InvalidOAuthCodeError();
         }
 
-        $response = Clef::doApiRequest(
+        $response = $this->doApiRequest(
             "/authorize",
             array(
                 "data" => array(
                     'code' => $code,
-                    'app_id' => $this->$configuration->$id,
-                    'app_secret' => $this->$configuration->$secret
+                    'app_id' => $this->configuration->id,
+                    'app_secret' => $this->configuration->secret
                 ),
                 "method" => 'POST'
             )
@@ -97,8 +101,8 @@ class Client {
             array(
                 "data" => array(
                     "logout_token" => $token,
-                    'app_id' => $this->$configuration->$id,
-                    'app_secret' => $this->$configuration->$secret
+                    'app_id' => $this->configuration->id,
+                    'app_secret' => $this->configuration->secret
                 ),
                 "method" => 'POST'
             )
@@ -109,5 +113,29 @@ class Client {
         } else {
             $this->message_to_error($response->error);
         }
+    }
+
+    public function generate_session_state_parameter() {
+        if (!session_id()) {
+            session_start();
+        }
+
+        if (isset($_SESSION['state'])) {
+            return $_SESSION['state'];
+        } else {
+            $state = $this->base64url_encode(openssl_random_pseudo_bytes(32));
+            $_SESSION['state'] = $state;
+            return $state;
+        }
+    }
+
+    public static function validate_session_state_parameter($state) {
+        if (!session_id()) {
+            session_start();
+        }
+
+        $is_valid = isset($_SESSION['state']) && strlen($_SESSION['state']) > 0 && $_SESSION['state'] == $state;
+        unset($_SESSION['state']);
+        return $is_valid;
     }
 } 

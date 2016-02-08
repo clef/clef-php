@@ -37,7 +37,7 @@ trait Requests {
                 throw new Exception("Invalid Clef API request method.");
         }
 
-        $url = self::$apiBase . '/' . Clef::getApiVersion() . $path;
+        $url = $this->configuration->api_base . '/' . $this->configuration->api_version . $path;
         $response = @file_get_contents($url, false, stream_context_create($requestOptions));
 
         if ($response !== false) {
