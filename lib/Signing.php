@@ -12,7 +12,7 @@ trait Signing {
 
         $payload_json = $this->sort_and_json_encode($payload);
         $payload_hash = $this->hash($payload_json);
-        $payload_signature = $this->sign($payload_json);
+        $payload_signature = $this->sign($payload_json, $this->configuration->getKeypairObject());
 
         return $this->sort(array(
             "payload_json" => $payload_json,
@@ -65,7 +65,7 @@ trait Signing {
     public function assert_signature_valid($payload, $signature_type, $public_key) {
         $signature_is_valid = $this->verify(
             $payload["payload_json"],
-            $payload["signatures"][$signature_type]["signature"],
+            $this->base64url_decode($payload["signatures"][$signature_type]["signature"]),
             $public_key
         );
 
@@ -110,13 +110,13 @@ trait Signing {
         return openssl_digest($data, self::$DIGEST_ALG); 
     }
 
-    function sign($data) {
-        openssl_sign($data, $signature, $this->configuration->getKeypairObject(), self::$SIGNATURE_ALG);
+    function sign($data, $keypair) {
+        openssl_sign($data, $signature, $keypair, self::$SIGNATURE_ALG);
         return $signature;
     }
 
     function verify($data, $signature, $public_key) {
-        $return_code = openssl_verify($this->base64url_decode($data), $signature, $public_key, self::$SIGNATURE_ALG);
+        $return_code = openssl_verify($data, $signature, $public_key, self::$SIGNATURE_ALG);
         if ($return_code === 1) {
             return true;
         } else if ($return_code === 0) {

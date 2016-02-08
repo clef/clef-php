@@ -1,4 +1,3 @@
-
 <?php
 
 class VerifyLoginPayloadTest extends PHPUnit_Framework_TestCase {
@@ -116,14 +115,14 @@ class VerifyLoginPayloadTest extends PHPUnit_Framework_TestCase {
      * @expectedExceptionMessage Invalid signature for user
     */
     public function testInvalidUserSignature() {
-        $good_signature = "goodsignature";
-        $bad_signature = "badsignature";
-        $payload_json = json_encode(array("a" => 1));
-        
         $client = $this->getMockBuilder("\Clef\Client")
             ->setConstructorArgs(array($this->configuration))
             ->setMethods(array("verify"))
             ->getMock();
+
+        $good_signature = "goodsignature";
+        $bad_signature = "badsignature";
+        $payload_json = json_encode(array("a" => 1));
 
         $client
             ->expects($this->exactly(2))
@@ -146,11 +145,11 @@ class VerifyLoginPayloadTest extends PHPUnit_Framework_TestCase {
             "payload_hash" => $payload_hash,
             "signatures" => array(
                 "application" => array(
-                    "signature" => $good_signature,
+                    "signature" => $client->base64url_encode($good_signature),
                     "type" => "rsa-sha256"
                 ),
                 "user" => array(
-                    "signature" => $bad_signature,
+                    "signature" => $client->base64url_encode($bad_signature),
                     "type" => "rsa-sha256"
                 )
             )
