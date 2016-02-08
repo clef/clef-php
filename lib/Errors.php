@@ -17,6 +17,9 @@ class ServerError extends Error {}
 class ConnectionError extends Error {}
 class MisconfigurationError extends Error {}
 class InvalidPayloadError extends Error {}
+class InvalidPayloadHashError extends Error {}
+class BadSignatureError extends Error {}
+class VerificationError extends Error {}
 
 trait Errors {
     private function message_to_error($msg) {

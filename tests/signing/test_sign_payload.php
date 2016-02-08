@@ -82,10 +82,9 @@ class SignPayloadTest extends PHPUnit_Framework_TestCase {
         $payload_to_sign = array("a" => 1);
         $signed_payload = $client->sign_payload($payload_to_sign);
 
-        $public_key = openssl_pkey_get_details($this->configuration->getKeypairObject())["key"];
 
         $this->assertEquals(
-            openssl_verify(json_encode($payload_to_sign), base64_decode($signed_payload["signatures"]["application"]["signature"]), openssl_get_publickey($public_key), OPENSSL_ALGO_SHA256), 
+            openssl_verify(json_encode($payload_to_sign), base64_decode($signed_payload["signatures"]["application"]["signature"]), $this->configuration->getPublicKey(), OPENSSL_ALGO_SHA256), 
             1
         );
     }

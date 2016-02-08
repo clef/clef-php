@@ -2,9 +2,11 @@
 
 namespace Clef;
 
+require_once __DIR__ . "/Encoding.php";
 require_once __DIR__ . "/Signing.php";
 
 class Client {
+    use \Clef\Encoding;
     use \Clef\Signing;
 
     private $configuration;
@@ -26,7 +28,24 @@ class Client {
     }
 
     public function verify_login_payload($payload, $user_public_key) {
+        if (is_string($user_public_key)) {
+            $user_public_key = openssl_get_public($user_public_key);
+        }
+
+        $this->assert_payload_hash_valid($payload);
+        $this->assert_signatures_present($payload, array("application", "user"));
+        $this->assert_signature_valid($payload, "application", $this->configuration->getPublicKey());
+        $this->assert_signature_valid($payload, "user", $user_public_key);
+
         return true;
+    }
+
+    public function encode_payload($payload) {
+        return $this->base64url_encode(json_encode($payload));
+    }
+
+    public function decode_payload($payload) {
+        return json_decode($this->base64url_decode($payload), true);
     }
 
     public function get_login_information($code) {

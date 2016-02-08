@@ -35,4 +35,11 @@ class Configuration {
 
         return $this->keypair;
     }
+
+    function getPublicKey() {
+        if (!isset($this->_public_key)) {
+            $this->_public_key = openssl_get_publickey(openssl_pkey_get_details($this->getKeypairObject())['key']); 
+        }
+        return $this->_public_key;
+    }
 }

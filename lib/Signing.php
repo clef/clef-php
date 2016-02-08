@@ -26,6 +26,56 @@ trait Signing {
         ));
     }
 
+    public function assert_signatures_present($payload, $signature_types) {
+        if (!isset($payload["signatures"])) {
+            throw new InvalidPayloadError("No signatures provided");
+        }
+
+        $signatures = $payload["signatures"];
+        foreach ($signature_types as $type) {
+            $is_present = isset($signatures[$type]) && isset($signatures[$type]["signature"]);
+
+            if (!$is_present) {
+                throw new InvalidPayloadError("No " . $type . " signature provided");
+            }
+        }
+
+        return true;
+    }
+
+    public function assert_payload_hash_valid($payload) {
+        if (!isset($payload["payload_json"]) || $payload["payload_json"] === "") {
+            throw new InvalidPayloadError("Missing payload_json");
+        }
+
+        if (!isset($payload["payload_hash"]) || $payload["payload_hash"] === "") {
+            throw new InvalidPayloadError("Missing payload_hash");
+        }
+
+        $computed_payload_hash = $this->hash($payload["payload_json"]);
+        $provided_payload_hash = $payload["payload_hash"];
+        
+        if ($computed_payload_hash != $provided_payload_hash) {
+            throw new InvalidPayloadHashError("payload_hash does not match payload_json");
+        }
+
+        return true;
+    }
+
+    public function assert_signature_valid($payload, $signature_type, $public_key) {
+        $signature_is_valid = $this->verify(
+            $payload["payload_json"],
+            $payload["signatures"][$signature_type]["signature"],
+            $public_key
+        );
+
+        if (!$signature_is_valid) {
+            throw new BadSignatureError("Invalid signature for " . $signature_type);
+        }
+
+        return true;
+    }
+
     /* Private functions */ 
 
     function assert_keys_in_payload($payload, $keys) {
@@ -63,5 +113,16 @@ trait Signing {
     function sign($data) {
         openssl_sign($data, $signature, $this->configuration->getKeypairObject(), self::$SIGNATURE_ALG);
         return $signature;
+    }
+
+    function verify($data, $signature, $public_key) {
+        $return_code = openssl_verify($this->base64url_decode($data), $signature, $public_key, self::$SIGNATURE_ALG);
+        if ($return_code === 1) {
+            return true;
+        } else if ($return_code === 0) {
+            return false;
+        } else if ($return_code === -1) {
+            throw new VerificationError("There was an error verifying the signature");
+        }
     }
 }
