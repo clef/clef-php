@@ -32,10 +32,6 @@ class Client {
     }
 
     public function verify_login_payload($payload, $user_public_key) {
-        if (is_string($user_public_key)) {
-            $user_public_key = openssl_get_public($user_public_key);
-        }
-
         $this->assert_payload_hash_valid($payload);
         $this->assert_signatures_present($payload, array("application", "user"));
         $this->assert_signature_valid($payload, "application", $this->configuration->getPublicKey());

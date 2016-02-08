@@ -116,6 +116,10 @@ trait Signing {
     }
 
     function verify($data, $signature, $public_key) {
+        if (is_string($public_key)) {
+            $public_key = openssl_get_publickey($public_key);
+        }
+
         $return_code = openssl_verify($data, $signature, $public_key, self::$SIGNATURE_ALG);
         if ($return_code === 1) {
             return true;
