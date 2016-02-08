@@ -7,16 +7,6 @@ require_once __DIR__ . '/Client.php';
 require_once __DIR__ . '/Errors.php';
 
 class Clef {
-
-    // @var string The Stripe API key to be used for requests.
-    public static $apiID;
-    public static $apiSecret;
-
-    // @var string The base URL for the Stripe API.
-    public static $apiBase = 'https://clef.io/api';
-    // @var string|null The version of the Clef API to use for requests.
-    public static $apiVersion = 'v1';
-
     private static $configuration;
     private static $client;
 
@@ -28,26 +18,32 @@ class Clef {
     }
 
     public static function get_login_information($code) {
+        self::assert_configured();
         return self::$client->get_login_information($code);
     }
 
     public static function get_logout_information($token) {
+        self::assert_configured();
         return self::$client->get_logout_information($token);
     }
 
     public static function generate_session_state_parameter() {
+        self::assert_configured();
         return self::$client->generate_session_state_parameter();
     }
 
     public static function sign_login_payload($payload) {
+        self::assert_configured();
         return self::$client->sign_login_payload($payload);
     }
 
     public static function sign_reactivation_payload($payload) {
+        self::assert_configured();
         return self::$client->sign_reactivation_payload($payload);
     }
 
     public static function verify_login_payload($payload, $user_public_key) {
+        self::assert_configured();
         return self::$client->verify_login_payload($payload, $user_public_key);
     }
 
@@ -61,6 +57,12 @@ class Clef {
 
     public static function validate_session_state_parameter($state) {
         return self::$client->validate_session_state_parameter($state);
+    }
+
+    private static function assert_configured() {
+        if (!(isset(self::$client) && isset(self::$configuration))) {
+            throw new MisconfigurationError("You have not configured Clef. Please call \Clef\Clef::\$configure before using the library.");
+        }
     }
 
     // Deprecated functions
