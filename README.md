@@ -113,7 +113,7 @@ The Clef library will take care of properly serializing the payload to `payload_
 
 Finally, you can serialize the payload to base64 and redirect the browser: 
 
-    header("https://clef.io/api/v1/validate?payload=" . \Clef\Clef::encode_payload(signed_payload));
+    header("Location: https://clef.io/api/v1/validate?payload=" . \Clef\Clef::encode_payload(signed_payload));
     die();
 
 #### Verifying the user-signed payload after a user confirms login
