@@ -27,7 +27,7 @@ class Client {
 
     public function sign_reactivation_payload($payload) {
         $payload["type"] = "reactivation_handshake";
-        $this->assert_keys_in_payload($payload, array("type"));
+        $this->assert_keys_in_payload($payload, array("reactivation_token"));
         return $this->sign_payload($payload);
     }
 
@@ -48,42 +48,71 @@ class Client {
         return json_decode($this->base64url_decode($payload), true);
     }
 
+    public function verify_reactivation_payload($payload, $options = array()) {
+      $this->assert_payload_hash_valid($payload);
+      $this->assert_signatures_present($payload, array("initiation"));
+      $this->assert_signature_valid($payload, "initiation", $this->configuration->initiation_public_key);
+
+      $is_test_reactivation = isset($options['unsafe_do_not_verify_confirmation_signature']) &&
+          $options['unsafe_do_not_verify_confirmation_signature'] == 1;
+
+      if ($is_test_reactivation){
+        $this->assert_test_payload($payload);
+      } else {
+        $this->assert_signatures_present($payload, array("confirmation"));
+        $this->assert_signature_valid($payload, "confirmation", $this->configuration->confirmation_public_key);
+      }
+
+      return true;
+    }
+
+    public function get_reactivation_payload($token, $options = array()) {
+      $reactivation_handshake_payload = array("reactivation_token" => $token);
+      $signed_reactivation_handshake_payload = $this->sign_reactivation_payload($reactivation_handshake_payload);
+      $encoded_reactivation_handshake_payload = $this->encode_payload($signed_reactivation_handshake_payload);
+
+      $reactivation_payload = $this->get(
+        "reactivations/$token", array(),
+        array(
+              "Authorization" => "Payload $encoded_reactivation_handshake_payload"
+        )
+      );
+
+      $this->verify_reactivation_payload($reactivation_payload, $options);
+      $payload = json_decode($reactivation_payload["payload_json"], true);
+      return $payload;
+    }
+
     public function get_login_information($code) {
         if (!isset($code) || trim($code) === "") {
             throw new InvalidOAuthCodeError();
         }
 
-        $response = $this->doApiRequest(
-            "/authorize",
+        $auth_response = $this->post(
+            "authorize",
             array(
-                "data" => array(
-                    'code' => $code,
-                    'app_id' => $this->configuration->id,
-                    'app_secret' => $this->configuration->secret
-                ),
-                "method" => 'POST'
+                'code' => $code,
+                'app_id' => $this->configuration->id,
+                'app_secret' => $this->configuration->secret
             )
         );
 
         // if there's an error, Clef's API will report it
-        if(!isset($response->error)) {
-            $response = $this->doApiRequest(
-                "/info",
+        if(!isset($auth_response["error"])) {
+            $info_response = $this->get(
+                "info",
                 array(
-                    "data" => array(
-                        "access_token" => $response->access_token
-                    ),
-                    "method" => "GET"
+                    "access_token" => $auth_response["access_token"]
                 )
             );
 
-            if (!isset($response->error)) {
-                return $response;
+            if (!isset($info_response["error"])) {
+                return $info_response;
             } else {
-                $this->message_to_error($response->error);
+                $this->message_to_error($info_response["error"]);
             }
         } else {
-            $this->message_to_error($response->error);
+            $this->message_to_error($auth_response["error"]);
         }
     }
 
@@ -92,22 +121,19 @@ class Client {
             throw new InvalidLogoutTokenError();
         }
 
-        $response = $this->doApiRequest(
-            '/logout',
-            array(
-                "data" => array(
+        $response = $this->post(
+            'logout',
+            array (
                     "logout_token" => $token,
                     'app_id' => $this->configuration->id,
                     'app_secret' => $this->configuration->secret
-                ),
-                "method" => 'POST'
             )
         );
 
-        if (!isset($response->error)) {
-            return $response->clef_id;
+        if (!isset($response["error"])) {
+            return $response["clef_id"];
         } else {
-            $this->message_to_error($response->error);
+            $this->message_to_error($response["error"]);
         }
     }
 
@@ -134,4 +160,4 @@ class Client {
         unset($_SESSION['state']);
         return $is_valid;
     }
-} 
+}
