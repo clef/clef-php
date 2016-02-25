@@ -24,5 +24,8 @@
   },
   "autoload": {
     "psr-4": { "Clef\\" : "lib/" }
+  },
+  "scripts": {
+    "test": "phpunit --bootstrap init.php tests/*Test.php"
   }
 }
