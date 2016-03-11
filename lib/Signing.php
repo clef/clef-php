@@ -43,6 +43,19 @@ trait Signing {
         return true;
     }
 
+    public function assert_test_payload($payload) {
+        $payload_blob = json_decode($payload["payload_json"], true);
+        if (!array_key_exists('test', $payload_blob)) {
+            throw new InvalidPayloadError("Missing 'test' key for test payloads.");
+        }
+
+        if (!isset($payload_blob['test'])) {
+            throw new VerificationError("Invalid test payload.");
+        }
+
+        return true;
+    }
+
     public function assert_payload_hash_valid($payload) {
         if (!isset($payload["payload_json"]) || $payload["payload_json"] === "") {
             throw new InvalidPayloadError("Missing payload_json");
@@ -54,7 +67,7 @@ trait Signing {
 
         $computed_payload_hash = $this->hash($payload["payload_json"]);
         $provided_payload_hash = $payload["payload_hash"];
-        
+
         if ($computed_payload_hash != $provided_payload_hash) {
             throw new InvalidPayloadHashError("payload_hash does not match payload_json");
         }
@@ -76,7 +89,7 @@ trait Signing {
         return true;
     }
 
-    /* Private functions */ 
+    /* Private functions */
 
     function assert_keys_in_payload($payload, $keys) {
         foreach ($keys as $key) {
@@ -107,7 +120,7 @@ trait Signing {
     }
 
     function hash($data) {
-        return openssl_digest($data, self::$DIGEST_ALG); 
+        return openssl_digest($data, self::$DIGEST_ALG);
     }
 
     function sign($data, $keypair) {

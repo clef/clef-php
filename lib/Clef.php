@@ -27,6 +27,11 @@ class Clef {
         return self::$client->get_logout_information($token);
     }
 
+    public static function get_reactivation_payload($token, $options = []) {
+      self::assert_configured();
+      return self::$client->get_reactivation_payload($token, $options);
+    }
+
     public static function generate_session_state_parameter() {
         self::assert_configured();
         return self::$client->generate_session_state_parameter();

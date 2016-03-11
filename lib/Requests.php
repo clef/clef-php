@@ -3,52 +3,25 @@
 namespace Clef;
 
 trait Requests {
-
-    private function doApiRequest($path, $options=array(method => 'POST')) {
-        switch ($options['method']) {
-            case "POST":
-                $requestOptions = array('http' =>
-                    array(
-                        'method'  => 'POST',
-                        'header'  => 'Content-type: application/x-www-form-urlencoded',
-                        'ignore_errors' => true
-                    )
-                );
-
-                if (isset($options['data'])) {
-                    $requestOptions['http']['content'] = http_build_query($options['data']);
-                }
-
-                break;
-            case "GET":
-                $requestOptions = array('http' =>
-                    array(
-                        'method'  => 'GET',
-                        'ignore_errors' => true
-                    )
-                );
-
-                if (isset($options['data'])) {
-                    $path .= '?' . http_build_query($options['data']);
-                }
-
-                break;
-            default:
-                throw new Exception("Invalid Clef API request method.");
-        }
-
-        $url = $this->configuration->api_base . '/' . $this->configuration->api_version . $path;
-        $response = @file_get_contents($url, false, stream_context_create($requestOptions));
-
-        if ($response !== false) {
-            try {
-                return json_decode($response);
-            } catch (Exception $e) {
-                throw new ServerError("An error occurred while processing your Clef API request: " . $response);
-            }
-        } else {
-            throw new ConnectionError("An error occurred while trying to connect to the Clef API. Please check your connection and try again.");
-        }
+    public function post($path, $data = array(), $headers = array()) {
+        return $this->send_request(\Requests::POST, $path, $data, $headers);
     }
 
+    public function get($path, $data = array(), $headers = array()) {
+        return $this->send_request(\Requests::GET, $path, $data, $headers);
+    }
+
+    private function sendRequest($type, $path, $data = array(), $headers = array()) {
+        $full_uri = "{$this->configuration->api_base}/{$this->configuration->api_version}/{$path}";
+        try {
+          $response = \Requests::request($full_uri, $headers, $data, $type);
+          if ($response->status_code != 200) {
+            throw new ServerError("The Clef API raised an error: $response->body.");
+          } else {
+            return json_decode($response->body, true);
+          }
+        } catch (Exception $e) {
+            throw new ServerError("An error occurred while processing your Clef API request: " . $response);
+        }
+    }
 }
