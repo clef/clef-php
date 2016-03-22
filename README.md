@@ -84,6 +84,8 @@ logout](http://docs.getclef.com/v1.0/docs/database-logout).
 
 The Clef PHP library can be used to implement [Distributed Auth](https://getclef.com/distributed). If you're not using Distributed Auth, please ignore this section.
 
+### Distributed Auth Login
+
 #### Constructing the login payload
 
 After you complete the OAuth handshake, the library will construct, sign, and serialize a valid payload for you.
@@ -113,7 +115,7 @@ The Clef library will take care of properly serializing the payload to `payload_
 
 Finally, you can serialize the payload to base64 and redirect the browser: 
 
-    header("Location: https://clef.io/api/v1/validate?payload=" . \Clef\Clef::encode_payload(signed_payload));
+    header("Location: https://clef.io/api/v1/validate?payload=" . \Clef\Clef::encode_payload($signed_payload));
     die();
 
 #### Verifying the user-signed payload after a user confirms login
@@ -142,6 +144,81 @@ Then, we verify that the payload is signed by the user's private key:
 `verify_login_payload` validates the payload, verifies that it originated from your website by verifying with your website's public key, and verifies that the user signed it. If it fails, it will throw an exception of the type `\Clef\VerificationError` with a message indicating the error. 
 
 If verification succeeds, you can log the user in as you normally would. 
+
+
+### Distributed Auth Action Confirmation
+
+The API for Distributed Auth Action Confirmation is very similar to Distributed Auth Login. There are three key differences:
+
+1. You must provide a custom `type` in your payload
+2. You must provide a custom `description` in your payload that is less 140 characters
+3. You must use the `sign_custom_payload` and `verify_custom_payload` functions
+
+Right now, the custom types available are:
+
+* `withdrawal`
+
+#### Constructing a custom payload
+
+After you complete the OAuth handshake, the library will construct, sign, and serialize a valid payload for you.
+
+First, construct the payload: 
+
+    // Following the OAuth handshake, we create or look up a user with the
+    // information returned by Clef. Since auth_hash contains a user's public key,
+    // a newly created user should be created with the public key.
+    $user = User::find_by_clef_id($response["clef_id"]);
+
+    $payload = array(
+        "nonce" => bin2hex(openssl_random_pseudo_bytes(16)),
+        "clef_id" => $user->clef_id,
+        "redirect_url" => 'http://yourwebsite.com/clef/confirm',
+        "session_id" => $session_id,
+        "type" => "withdrawal",
+        "description" => "You requested to withdraw 1.256 Bitcoin from your account"
+    }
+
+    # We store the payload in the browser session so we can verify the nonce later
+    $_SESSION['clef_payload'] = $payload;
+
+You can then sign the payload: 
+
+    $signed_payload = \Clef\Clef::sign_custom_payload($payload);
+
+The Clef library will take care of properly serializing the payload to `payload_json`, generating a `SHA256` hash and signing it. 
+
+Finally, you can serialize the payload to base64 and redirect the browser: 
+
+    header("Location: https://clef.io/api/v1/validate?payload=" . \Clef\Clef::encode_payload($signed_payload));
+    die();
+
+#### Verifying the user-signed payload after a user confirms login
+
+When the browser redirects to your distributed validation `redirect_url`, you'll receive the payload bundle you sent to Clef, signed by the user. We can use the library to validate and verify the user's signature.
+
+First, we decode the payload and check it against the nonce we generated: 
+
+    $payload_bundle = Clef::decode_payload($_REQUEST["payload"]);
+    $signed_payload = json_decode(payload_bundle["payload_json"], true);
+
+    $session_payload = $_SESSION["clef_payload"];
+    $payload_is_valid = ($session_payload != "" && $signed_payload != "" and $session_payload["nonce"] === $signed_payload["nonce"]);
+
+    if ($payload_is_valid) {
+        unset($_SESSION["clef_payload"]);
+    } else {
+        // Show an error message to the user
+    }
+
+Then, we verify that the payload is signed by the user's private key: 
+
+    $user = User::find_by_clef_id($signed_payload["clef_id"]);
+    \Clef\Clef::verify_custom_payload($payload_bundle, $user->public_key);
+
+`verify_custom_payload` validates the payload, verifies that it originated from your website by verifying with your website's public key, and verifies that the user signed it. If it fails, it will throw an exception of the type `\Clef\VerificationError` with a message indicating the error.
+
+If verification succeeds, you can proceed with whatever action the user was confirming.
+
 Sample App
 ----------
 

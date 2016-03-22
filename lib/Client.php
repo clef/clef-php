@@ -6,12 +6,16 @@ require_once __DIR__ . "/Encoding.php";
 require_once __DIR__ . "/Signing.php";
 require_once __DIR__ . "/Errors.php";
 require_once __DIR__ . "/Requests.php";
+require_once __DIR__ . "/Reactivation.php";
+require_once __DIR__ . "/Action.php";
 
 class Client {
     use \Clef\Encoding;
     use \Clef\Signing;
     use \Clef\Requests;
     use \Clef\Errors;
+    use \Clef\Reactivation;
+    use \Clef\Action;
 
     private $configuration;
 
@@ -21,49 +25,25 @@ class Client {
 
     public function sign_login_payload($payload) {
         $payload["type"] = "login";
-        $this->assert_keys_in_payload($payload, array("clef_id", "nonce", "redirect_url", "session_id", "type"));
-        return $this->sign_payload($payload);
+        return $this->sign_action_payload(
+            $payload,
+            array("clef_id", "nonce", "redirect_url", "session_id", "type")
+        );
     }
 
-    public function sign_reactivation_payload($payload) {
-        $payload["type"] = "reactivation_handshake";
-        $this->assert_keys_in_payload($payload, array("reactivation_token"));
-        return $this->sign_payload($payload);
+    public function sign_custom_payload($payload) {
+        return $this->sign_action_payload(
+            $payload,
+            array("clef_id", "nonce", "redirect_url", "session_id", "type", "description")
+        );
     }
 
     public function verify_login_payload($payload, $user_public_key) {
-        $this->assert_payload_hash_valid($payload);
-        $this->assert_signatures_present($payload, array("application", "user"));
-        $this->assert_signature_valid($payload, "application", $this->configuration->getPublicKey());
-        $this->assert_signature_valid($payload, "user", $user_public_key);
-
-        return true;
+        return $this->verify_action_payload($payload, $user_public_key);
     }
 
-    public function encode_payload($payload) {
-        return $this->base64url_encode(json_encode($payload));
-    }
-
-    public function decode_payload($payload) {
-        return json_decode($this->base64url_decode($payload), true);
-    }
-
-    public function verify_reactivation_payload($payload, $options = array()) {
-      $this->assert_payload_hash_valid($payload);
-      $this->assert_signatures_present($payload, array("initiation"));
-      $this->assert_signature_valid($payload, "initiation", $this->configuration->initiation_public_key);
-
-      $is_test_reactivation = isset($options['unsafe_do_not_verify_confirmation_signature']) &&
-          $options['unsafe_do_not_verify_confirmation_signature'] == 1;
-
-      if ($is_test_reactivation){
-        $this->assert_test_payload($payload);
-      } else {
-        $this->assert_signatures_present($payload, array("confirmation"));
-        $this->assert_signature_valid($payload, "confirmation", $this->configuration->confirmation_public_key);
-      }
-
-      return true;
+    public function verify_custom_payload($payload, $user_public_key) {
+        return $this->verify_action_payload($payload, $user_public_key);
     }
 
     public function get_reactivation_payload($token, $options = array()) {
@@ -82,6 +62,15 @@ class Client {
       $payload = json_decode($reactivation_payload["payload_json"], true);
       return $payload;
     }
+
+    public function encode_payload($payload) {
+        return $this->base64url_encode(json_encode($payload));
+    }
+
+    public function decode_payload($payload) {
+        return json_decode($this->base64url_decode($payload), true);
+    }
+
 
     public function get_login_information($code) {
         if (!isset($code) || trim($code) === "") {
