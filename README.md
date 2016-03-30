@@ -111,7 +111,7 @@ You can then sign the payload:
 
     $signed_payload = \Clef\Clef::sign_login_payload($payload);
 
-The Clef library will take care of properly serializing the payload to `payload_json`, generating a `SHA256` hash and signing it. 
+The Clef library will take care of properly serializing the payload to JSON, generating a `SHA256` hash and signing it. 
 
 Finally, you can serialize the payload to base64 and redirect the browser: 
 
@@ -185,7 +185,7 @@ You can then sign the payload:
 
     $signed_payload = \Clef\Clef::sign_custom_payload($payload);
 
-The Clef library will take care of properly serializing the payload to `payload_json`, generating a `SHA256` hash and signing it. 
+The Clef library will take care of properly serializing the payload to JSON, generating a `SHA256` hash and signing it. 
 
 Finally, you can serialize the payload to base64 and redirect the browser: 
 
