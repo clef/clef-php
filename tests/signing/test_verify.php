@@ -30,6 +30,6 @@ class VerifyTest extends PHPUnit_Framework_TestCase {
         $client = new \Clef\Client($this->configuration);
         $data = "thisisdata";
         $signature = $client->sign($data, $this->user_private_key);
-        $this->assertFalse($client->verify($data, $signature + "bad", $this->user_public_key));
+        $this->assertFalse($client->verify($data, $signature . "bad", $this->user_public_key));
     }
 }
