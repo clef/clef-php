@@ -5,7 +5,6 @@ namespace Clef;
 require_once __DIR__ . '/Configuration.php';
 require_once __DIR__ . '/Client.php';
 require_once __DIR__ . '/Errors.php';
-require_once __DIR__ . '/../vendor/autoload.php';
 
 class Clef {
     private static $configuration;
