@@ -1,6 +1,6 @@
 <?php
 
-class VerifyLoginPayloadTest extends PHPUnit_Framework_TestCase {
+class VerifyCustomPayloadTest extends PHPUnit_Framework_TestCase {
 
     protected function setUp() {
         $this->configuration = new \Clef\Configuration(array(
@@ -46,7 +46,7 @@ class VerifyLoginPayloadTest extends PHPUnit_Framework_TestCase {
             )
         );
 
-        $this->assertTrue($client->verify_login_payload($payload, $this->user_public_key));
+        $this->assertTrue($client->verify_custom_payload($payload, $this->user_public_key));
     }
 
     /**
@@ -80,7 +80,7 @@ class VerifyLoginPayloadTest extends PHPUnit_Framework_TestCase {
             )
         );
 
-        $client->verify_login_payload($payload, $this->user_public_key);
+        $client->verify_custom_payload($payload, $this->user_public_key);
     }
 
     /**
@@ -114,6 +114,6 @@ class VerifyLoginPayloadTest extends PHPUnit_Framework_TestCase {
             )
         );
 
-        $client->verify_login_payload($payload, $this->user_public_key);
+        $client->verify_action_payload($payload, $this->user_public_key);
     }
 }

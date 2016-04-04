@@ -11,7 +11,7 @@ trait Requests {
         return $this->send_request(\Requests::GET, $path, $data, $headers);
     }
 
-    private function sendRequest($type, $path, $data = array(), $headers = array()) {
+    private function send_request($type, $path, $data = array(), $headers = array()) {
         $full_uri = "{$this->configuration->api_base}/{$this->configuration->api_version}/{$path}";
         try {
           $response = \Requests::request($full_uri, $headers, $data, $type);

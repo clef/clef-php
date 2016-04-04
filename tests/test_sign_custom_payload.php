@@ -1,6 +1,6 @@
 <?php
 
-class SignLoginPayloadTest extends PHPUnit_Framework_TestCase {
+class SignCustomPayloadTest extends PHPUnit_Framework_TestCase {
 
     protected function setUp() {
         $this->configuration = new \Clef\Configuration(array(
@@ -11,14 +11,6 @@ class SignLoginPayloadTest extends PHPUnit_Framework_TestCase {
                 "private_key_type" => OPENSSL_KEYTYPE_RSA
             ))
         ));
-    }
-
-    public function testAddsLoginTyoe() {
-        \Clef\Clef::configure($this->configuration);
-        $payload = \Clef\Clef::sign_login_payload(array('clef_id' => '1234', 'nonce' => 'nonce', 'redirect_url' => 'http://test.com', 'session_id' => '1234'));
-
-        $payload = json_decode($payload['payload_json'], true);
-        $this->assertEquals($payload['type'], 'login');
     }
 
     /**
@@ -36,7 +28,7 @@ class SignLoginPayloadTest extends PHPUnit_Framework_TestCase {
     */
     public function testMissingNonce() {
         \Clef\Clef::configure($this->configuration);
-        \Clef\Clef::sign_login_payload(array('clef_id' => '1234'));
+        \Clef\Clef::sign_custom_payload(array('clef_id' => '1234'));
     }
 
     /**
@@ -45,7 +37,7 @@ class SignLoginPayloadTest extends PHPUnit_Framework_TestCase {
     */
     public function testMissingRedirectURL() {
         \Clef\Clef::configure($this->configuration);
-        \Clef\Clef::sign_login_payload(array('clef_id' => '1234', 'nonce' => 'nonce'));
+        \Clef\Clef::sign_custom_payload(array('clef_id' => '1234', 'nonce' => 'nonce'));
     }
 
     /**
@@ -54,6 +46,25 @@ class SignLoginPayloadTest extends PHPUnit_Framework_TestCase {
     */
     public function testMissingSessionID() {
         \Clef\Clef::configure($this->configuration);
-        \Clef\Clef::sign_login_payload(array('clef_id' => '1234', 'nonce' => 'nonce', 'redirect_url' => 'http://test.com'));
+        \Clef\Clef::sign_custom_payload(array('clef_id' => '1234', 'nonce' => 'nonce', 'redirect_url' => 'http://test.com'));
     }
+
+    /**
+     * @expectedException        \Clef\InvalidPayloadError
+     * @expectedExceptionMessage Missing type in payload.
+    */
+    public function testMissingType() {
+        \Clef\Clef::configure($this->configuration);
+        \Clef\Clef::sign_custom_payload(array('clef_id' => '1234', 'nonce' => 'nonce', 'redirect_url' => 'http://test.com', 'session_id' => '123'));
+    }
+
+    /**
+     * @expectedException        \Clef\InvalidPayloadError
+     * @expectedExceptionMessage Missing description in payload.
+    */
+    public function testMissingDescription() {
+        \Clef\Clef::configure($this->configuration);
+        \Clef\Clef::sign_custom_payload(array('clef_id' => '1234', 'nonce' => 'nonce', 'redirect_url' => 'http://test.com', 'session_id' => '123', 'type' => 'custom_type'));
+    }
+
 }

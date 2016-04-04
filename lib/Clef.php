@@ -42,14 +42,19 @@ class Clef {
         return self::$client->sign_login_payload($payload);
     }
 
-    public static function sign_reactivation_payload($payload) {
+    public static function sign_custom_payload($payload) {
         self::assert_configured();
-        return self::$client->sign_reactivation_payload($payload);
+        return self::$client->sign_custom_payload($payload);
     }
 
     public static function verify_login_payload($payload, $user_public_key) {
         self::assert_configured();
         return self::$client->verify_login_payload($payload, $user_public_key);
+    }
+
+    public static function verify_custom_payload($payload, $user_public_key) {
+        self::assert_configured();
+        return self::$client->verify_custom_payload($payload, $user_public_key);
     }
 
     public static function encode_payload($payload) {
